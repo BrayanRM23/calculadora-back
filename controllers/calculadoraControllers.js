@@ -1,66 +1,73 @@
 
-const {add, subtract, multiply, mayorear, promediar, menorear} = require('../operaciones/operaciones.js');
+function ascendente(req, res) {
+    const { body } = req;
+    const { numeros } = body; 
 
-function sumar(req, res){
-    const {body} = req;
-    const {number1, number2} = body;
-    const result = add(number1, number2);
-    console.log("num1: " + String(number1) + " num2: " + String(number2) + " y la suma: " + String(result))
+    if (!numeros || !Array.isArray(numeros)) {
+        return res.status(400).json({ error: 'Se requiere un array de números' });
+    }
+
+    const result = numeros.sort((a, b) => a - b);
+
     res.json({
         resultado: result
     });
 }
 
-function restar(req, res){
-    const {body} = req;
-    const {number1, number2} = body;
-    const result = subtract(number1, number2);
+
+function descendente(req, res) {
+    const { body } = req;
+    const { numeros } = body; 
+
+    
+    if (!numeros || !Array.isArray(numeros)) {
+        return res.status(400).json({ error: 'Se requiere un array de números' });
+    }
+
+    const result = numeros.sort((a, b) => b - a);
+
     res.json({
         resultado: result
-    })
+    });
 }
 
-function multiplicar(req, res){
-    const {body} = req;
-    const {number1, number2} = body;
-    const result = multiply(number1, number2);
-    res.json({
-        resultado: result
-    })
-}
+function procesarEcuacion(req, res) {
+    const { ecuacion, variables } = req.body; // La ecuación y las variables vienen del frontend
+    
+    if (!ecuacion || typeof ecuacion !== 'string') {
+        return res.status(400).json({ error: 'Se requiere una ecuación válida' });
+    }
 
-function mayor(req, res){
-    const {body} = req;
-    const {number1, number2} = body;
-    const result = mayorear(number1, number2);
-    res.json({
-        resultado: result
-    })
-}
+    if (!variables || typeof variables !== 'object') {
+        return res.status(400).json({ error: 'Se requiere un objeto de variables' });
+    }
 
-function menor(req, res){
-    const {body} = req;
-    const {number1, number2} = body;
-    const result = menorear(number1, number2);
-    res.json({
-        resultado: result
-    })
-}
+    try {
+        let ecuacionProcesada = ecuacion;
 
-function prom(req, res){
-    const {body} = req;
-    const {number1, number2} = body;
-    const result = promediar(number1, number2);
-    res.json({
-        resultado: result
-    })
+        ecuacionProcesada = ecuacionProcesada.replace(/(\d)([A-Za-z])/g, '$1*$2');
+        
+        ecuacionProcesada = ecuacionProcesada.replace(/([A-Za-z])([A-Za-z])/g, '$1*$2');
+
+        for (const [key, value] of Object.entries(variables)) {
+            const regexVariable = new RegExp(key, 'g');
+            ecuacionProcesada = ecuacionProcesada.replace(regexVariable, value);
+        }
+
+        const resultado = eval(ecuacionProcesada); // Evalúa la ecuación procesada con los valores numéricos
+
+        res.json({
+            resultado: resultado
+        });
+
+    } catch (error) {
+        console.error("Error al procesar la ecuación:", error);
+        res.status(400).json({ error: 'Error al procesar la ecuación' });
+    }
 }
 
 module.exports = {
-    sumar,
-    restar,
-    multiplicar,
-    mayor,
-    menor,
-    prom
+    ascendente,
+    descendente,
+    procesarEcuacion
 }
